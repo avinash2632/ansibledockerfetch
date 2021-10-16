@@ -1,0 +1,57 @@
+---
+- hosts: localhost
+
+  become: yes
+
+  gather_facts: False
+
+
+
+
+
+  tasks:
+
+
+     - name: cloning the git repo
+       git:
+        repo: git@gitlab.com:avinash2632/fpmdockergit.git
+        force: yes
+        dest: /home/avinash/phpansible
+        clone: yes
+        update: yes
+        version: main
+   
+
+     - name: getting the tag info
+       command: chdir=/home/avinash/phpansible git describe
+
+
+               
+           
+       register: tagmate
+
+     
+
+     - name: fetching the value
+       debug:
+
+        msg: "{{ tagmate.stdout }}"
+
+
+     - name: building the container image
+       docker_image:
+        name: phpfpmimage:{{  tagmate.stdout }}
+        build: 
+          path: /home/avinash/phpansible
+      
+        state: present 
+     
+       
+     - name: pushing the image manually
+       command:  "{{ item }} chdir=/home/avinash"
+       with_items: 
+        - docker tag phpfpmimage:{{  tagmate.stdout }} avinash263/phpfpmimage:{{  tagmate.stdout }}  
+        - docker push avinash263/phpfpmimage:{{  tagmate.stdout }}
+
+
+
